@@ -128,6 +128,43 @@ The genre and mood signals are binary (match or no match). The energy signal is 
 **Small catalog amplifies all biases.** With only 20 songs, some genres (e.g. lofi, pop) have multiple entries while others (e.g. blues, soul) have one. Users whose favorite genre has few catalog entries will almost always see cross-genre fallbacks in their top 5.
 
 
+## Sample Output
+
+Running `python3 src/main.py` with the default `pop / happy / energy 0.8` profile:
+
+![Terminal output showing top 5 recommendations](docs/sample_output.png)
+
+```
+Loaded songs: 20
+
+========================================
+  Top Recommendations
+  Profile: pop / happy / energy 0.8
+========================================
+
+#1  Sunrise City by Neon Echo
+    Score : 3.98 / 4.00
+    Why   : genre match (+2.0), mood match (+1.0), energy similarity (+0.98)
+
+#2  Gym Hero by Max Pulse
+    Score : 2.87 / 4.00
+    Why   : genre match (+2.0), energy similarity (+0.87)
+
+#3  Rooftop Lights by Indigo Parade
+    Score : 1.96 / 4.00
+    Why   : mood match (+1.0), energy similarity (+0.96)
+
+#4  Crown Heights Anthem by Kayo Verse
+    Score : 0.96 / 4.00
+    Why   : energy similarity (+0.96)
+
+#5  Night Drive Loop by Neon Echo
+    Score : 0.95 / 4.00
+    Why   : energy similarity (+0.95)
+```
+
+---
+
 ## Getting Started
 
 ### Setup
