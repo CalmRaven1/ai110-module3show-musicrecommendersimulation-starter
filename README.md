@@ -1,65 +1,57 @@
-# 🎵 Music Recommender Simulation
+# Music Recommender Simulation
 
 ## Project Summary
 
-In this project you will build and explain a small music recommender system.
-
-Your goal is to:
-
-- Represent songs and a user "taste profile" as data
-- Design a scoring rule that turns that data into recommendations
-- Evaluate what your system gets right and wrong
-- Reflect on how this mirrors real world AI recommenders
-
-Replace this paragraph with your own summary of what your version does.
+VibeMatch 1.0 is a small content-based music recommender. You give it a genre, a mood, and an energy target. It scores every song in a 20-song catalog against those three preferences and returns the top 5 with a plain-English explanation for each pick. The goal was to build something simple enough to fully understand — and then stress-test it until it broke.
 
 ---
 
 ## How The System Works
 
-Explain your design in plain language.
-Real-world recommendation systems like Spotify's Discover Weekly operate as massive hybrid engines — they blend collaborative filtering (learning from millions of users' collective behavior: plays, skips, saves, playlist adds) with content-based filtering (analyzing the actual sonic DNA of songs: energy, tempo, valence, acousticness) and layer contextual signals on top (time of day, device, recent session history). The result is a system that feels almost telepathic because it triangulates who you are as a listener, what the music objectively sounds like, and what moment you're in — all simultaneously. No single signal drives the output; it's the weighted consensus of hundreds of features passed through matrix factorization, neural audio embeddings, and NLP on playlist text. This simulator is intentionally a pure content-based recommender — no user history, no crowd behavior, no context. Given a seed song or preference profile, it will score every candidate in songs.csv using a Gaussian similarity function across four audio features (energy, valence, tempo, danceability), weighted by how strongly each feature drives perceived "vibe." Categorical signals — mood, genre, artist — act as multipliers and penalties rather than hard filters, so a great numeric match is never killed by a genre label mismatch, but a confirmed same-mood match gets a meaningful boost. The ranking layer then excludes the seed, enforces a minimum quality threshold, and
- slices the top results. The deliberate tradeoff: this version sacrifices discovery-by-crowd-wisdom in exchange for being fully explainable — every score is traceable back to a specific feature difference, which makes it a clean learning model for understanding the math before the complexity of collaborative systems is introduced.
-Some prompts to answer:
+The recommender is a pure content-based system. It looks only at song features and user preferences. It has no listening history, no crowd behavior, and no context signals. Every score is traceable back to a specific feature difference, which makes it a clean model for understanding the math before adding complexity.
 
-- What features does each `Song` use in your system
-  - For example: genre, mood, energy, tempo
-  Each Song in recommender.py:5-19 carries ten attributes loaded directly from songs.csv. Three are identity fields (id, title, artist) used only for display. The remaining seven are the features that drive recommendations:
-  genre and mood — categorical labels used as bonus/penalty modifiers
-  energy — the single most important feature; immediately felt as calm vs. intense
-  valence — emotional tone: happy/bright vs. dark/melancholic
-  tempo_bpm — governs activity fit (studying, running, sleeping)
-  danceability — rhythmic feel; minor refinement on top of energy
-  acousticness — organic vs. electronic texture; largely redundant with energy in this dataset
+**Some prompts to answer:**
 
-- What information does your `UserProfile` store
-The UserProfile in recommender.py:21-30 is a snapshot of current preference — not listening history. It stores:
+- **What features does each `Song` use in your system?**
 
-favorite_genre — used to award a genre-match bonus during scoring
-favorite_mood — used for mood-match bonus and opposite-mood penalty
-target_energy — the numeric anchor; the recommender rewards songs closest to this value
-likes_acoustic — boolean flag that can shift weight toward or away from acousticness
-There is no play history, skip log, or crowd data — this is a pure content-based profile.
-- How does your `Recommender` compute a score for each song
-The recommend method at recommender.py:40-42 (currently a stub) will score each candidate song in three layers:
-Layer 1 — Gaussian numeric similarity for each feature (σ = 0.20):
-S(x) = exp( -(x_song - x_pref)² / (2 × 0.04) )
-This rewards songs close to the user's preference, not songs that are merely high or low. A song 0.05 away scores ~0.97; a song 0.50 away scores ~0.04.
-Layer 2 — weighted combination of the four numeric scores:
-numeric = 0.40·S(energy) + 0.30·S(valence) + 0.20·S(tempo) + 0.10·S(danceability)
-Layer 3 — categorical multiplier and penalty:
-× (1.0 + 0.20·mood_match + 0.10·genre_match)
-× (1.0 - 0.30·opposite_mood - 0.15·big_tempo_gap)
-Final score is capped at [0.0, 1.0]. Every point is traceable back to a specific feature difference.
-- How do you choose which songs to recommend
-After scoring, the ranking layer in recommend_songs() at recommender.py:57-64 makes five sequential decisions:
-1. SCORE    compute final_score for every song in the catalog
-2. EXCLUDE  remove the seed song itself (id match — can't recommend what's already playing)
-3. FILTER   drop any song scoring below 0.30 (too jarring, not a plausible next track)
-4. SORT     order remaining songs by final_score descending
-5. SLICE    return the top k (default k=5)
-The distinction matters: scoring is per-song (how good is this one candidate?), ranking is over the whole list (given all scores, what do we actually serve?). Keeping them separate means either rule can be tuned independently — change the weights without touching the ranking logic, or change k without touching the scoring math.
-You can include a simple diagram or bullet list if helpful.
+  Each song carries ten attributes loaded from `data/songs.csv`. Three are identity fields (id, title, artist) used only for display. The seven that drive scoring are:
+  - `genre` and `mood` — categorical labels used for binary match bonuses
+  - `energy` — the single heaviest feature; immediately felt as calm vs. intense
+  - `valence` — emotional tone: happy/bright vs. dark/melancholic (stored but not scored)
+  - `tempo_bpm` — governs activity fit like studying or running (stored but not scored)
+  - `danceability` — rhythmic feel (stored but not scored)
+  - `acousticness` — organic vs. electronic texture (stored but not scored)
+
+- **What information does your `UserProfile` store?**
+
+  The `UserProfile` is a snapshot of current taste — not listening history. It stores:
+  - `favorite_genre` — used to award a +1.0 genre-match bonus during scoring
+  - `favorite_mood` — used for a +1.0 mood-match bonus
+  - `target_energy` — the numeric anchor; songs closest to this value score highest on energy
+  - `likes_acoustic` — a boolean flag that is collected but not currently used in scoring
+
+  There is no play history, skip log, or crowd data. This is a pure content-based profile.
+
+- **How does your `Recommender` compute a score for each song?**
+
+  Scoring happens in three steps:
+
+  1. **Genre check** — if the song's genre matches the user's genre, add 1.0 point
+  2. **Mood check** — if the song's mood matches the user's mood, add 1.0 point
+  3. **Energy similarity** — compute `2.0 × (1.0 − |song.energy − user.energy|)`, which contributes between 0.0 and 2.0 points
+
+  Maximum possible score is 4.0. Genre and mood are binary (match or no match). Energy is continuous — a perfect energy match contributes the full 2.0 points; the most distant possible energy contributes 0.0.
+
+- **How do you choose which songs to recommend?**
+
+  After every song is scored, the ranking layer makes three decisions:
+  1. **Sort** all songs by final score, highest first
+  2. **Slice** the top k results (default k = 5)
+  3. **Return** each result as a (song, score, explanation) tuple
+
+  Scoring and ranking are kept separate so either can be tuned independently — change the weights without touching the ranking logic, or change k without touching the math.
+
+---
 
 ### Data Flow Diagram
 
@@ -70,13 +62,13 @@ flowchart TD
     LOAD --> C[Pick next song from list]
 
     C --> D{genre match?}
-    D -- yes --> D1[+2.0]
+    D -- yes --> D1[+1.0]
     D -- no  --> D2[+0.0]
     D1 & D2 --> E{mood match?}
 
     E -- yes --> E1[+1.0]
     E -- no  --> E2[+0.0]
-    E1 & E2 --> F[energy similarity\n1.0 − abs·song − target·]
+    E1 & E2 --> F[energy similarity\n2.0 × 1 − abs·song − target·]
 
     F --> G[sum → final score\nattach explanation]
     G --> H{more songs?}
@@ -90,7 +82,7 @@ flowchart TD
 
 ### Algorithm Recipe
 
-This is the exact scoring formula used in `recommend_songs()`:
+This is the exact scoring formula used in `score_song()`:
 
 ```
 score = genre_points + mood_points + energy_similarity
@@ -98,69 +90,66 @@ score = genre_points + mood_points + energy_similarity
 
 | Signal | Rule | Points |
 |---|---|---|
-| Genre match | +2.0 if `song.genre == user.favorite_genre` | 0 or 2.0 |
-| Mood match | +1.0 if `song.mood == user.favorite_mood` | 0 or 1.0 |
-| Energy similarity | `1.0 - abs(song.energy - user.target_energy)` | 0.0 – 1.0 |
+| Genre match | +1.0 if `song.genre == user.genre` | 0 or 1.0 |
+| Mood match | +1.0 if `song.mood == user.mood` | 0 or 1.0 |
+| Energy similarity | `2.0 × (1.0 − abs(song.energy − user.energy))` | 0.0 – 2.0 |
 
 **Maximum possible score: 4.0**
 
-The genre and mood signals are binary (match or no match). The energy signal is continuous — a song at exactly the user's target energy contributes the full 1.0; a song at the opposite extreme contributes 0.0.
-
-**Example — user: `pop / happy / 0.8`**
+**Example — user: `pop / happy / energy 0.9`**
 
 | Song | Genre | Mood | Energy score | Total |
 |---|---|---|---|---|
-| Sunrise City (pop, happy, 0.82) | +2.0 | +1.0 | 0.98 | **3.98** |
-| Gym Hero (pop, intense, 0.93) | +2.0 | +0.0 | 0.87 | **2.87** |
-| Rooftop Lights (indie pop, happy, 0.76) | +0.0 | +1.0 | 0.96 | **1.96** |
-| Midnight Coding (lofi, chill, 0.42) | +0.0 | +0.0 | 0.62 | **0.62** |
+| Sunrise City (pop, happy, 0.82) | +1.0 | +1.0 | +1.84 | **3.84** |
+| Gym Hero (pop, intense, 0.93) | +1.0 | +0.0 | +1.94 | **2.94** |
+| Rooftop Lights (indie pop, happy, 0.76) | +0.0 | +1.0 | +1.72 | **2.72** |
+| Storm Runner (rock, intense, 0.91) | +0.0 | +0.0 | +1.98 | **1.98** |
 
 ---
 
 ### Known Biases and Limitations
 
-**Genre dominance.** Genre is worth 2.0 points — double the mood weight. A song in the wrong genre but with a perfect mood and energy match can score at most 2.0, while a same-genre song with a bad mood and poor energy still scores around 2.3. The system will consistently surface genre-loyal songs over cross-genre discoveries, even when those discoveries would feel right to the user.
+**Energy dominates after the first few results.** Energy is worth up to 2.0 points — double genre or mood. Once genre-matched songs run out (most genres have only 1 song), slots #4 and #5 fill with whatever is nearest to the user's energy level regardless of style.
 
-**Mood is all-or-nothing.** A song labeled `relaxed` gets zero mood points for a user who wants `chill`, even though those moods are adjacent. The binary match misses the spectrum between moods.
+**Mood is all-or-nothing.** A song labeled `relaxed` gets zero mood points for a user who wants `chill`, even though those moods are adjacent. The binary match misses the spectrum between moods — and a one-word typo costs a full point silently.
 
-**Energy is the only continuous signal.** Valence, danceability, and tempo are completely ignored. A sad-sounding song at the right energy level can score identically to an upbeat one, which may feel wrong in practice.
+**Energy is the only continuous signal.** Valence, danceability, tempo, and acousticness are loaded but never used in scoring. A sad-sounding song at the right energy level scores identically to a happy one.
 
-**Small catalog amplifies all biases.** With only 20 songs, some genres (e.g. lofi, pop) have multiple entries while others (e.g. blues, soul) have one. Users whose favorite genre has few catalog entries will almost always see cross-genre fallbacks in their top 5.
+**Small catalog amplifies all biases.** With 20 songs and 17 genres, most genres have only 1 entry. Users whose genre has few catalog entries will almost always see cross-genre fallbacks in their top 5.
 
+---
 
 ## Sample Output
 
-Running `python3 src/main.py` with the default `pop / happy / energy 0.8` profile:
-
-![Terminal output showing top 5 recommendations](docs/sample_output.png)
+Running `python3 src/main.py` with the High-Energy Pop profile:
 
 ```
 Loaded songs: 20
 
 ========================================
-  Top Recommendations
-  Profile: pop / happy / energy 0.8
+  Profile: High-Energy Pop
+  (pop / happy / energy 0.9)
 ========================================
 
 #1  Sunrise City by Neon Echo
-    Score : 3.98 / 4.00
-    Why   : genre match (+2.0), mood match (+1.0), energy similarity (+0.98)
+    Score : 3.84 / 4.00
+    Why   : genre match (+1.0), mood match (+1.0), energy similarity (+1.84)
 
 #2  Gym Hero by Max Pulse
-    Score : 2.87 / 4.00
-    Why   : genre match (+2.0), energy similarity (+0.87)
+    Score : 2.94 / 4.00
+    Why   : genre match (+1.0), energy similarity (+1.94)
 
 #3  Rooftop Lights by Indigo Parade
+    Score : 2.72 / 4.00
+    Why   : mood match (+1.0), energy similarity (+1.72)
+
+#4  Storm Runner by Voltline
+    Score : 1.98 / 4.00
+    Why   : energy similarity (+1.98)
+
+#5  Groove Cathedral by Funktown Collective
     Score : 1.96 / 4.00
-    Why   : mood match (+1.0), energy similarity (+0.96)
-
-#4  Crown Heights Anthem by Kayo Verse
-    Score : 0.96 / 4.00
-    Why   : energy similarity (+0.96)
-
-#5  Night Drive Loop by Neon Echo
-    Score : 0.95 / 4.00
-    Why   : energy similarity (+0.95)
+    Why   : energy similarity (+1.96)
 ```
 
 ---
@@ -175,22 +164,21 @@ Loaded songs: 20
    python -m venv .venv
    source .venv/bin/activate      # Mac or Linux
    .venv\Scripts\activate         # Windows
+   ```
 
-2. Install dependencies
+2. Install dependencies:
 
-```bash
-pip install -r requirements.txt
-```
+   ```bash
+   pip install -r requirements.txt
+   ```
 
 3. Run the app:
 
-```bash
-python -m src.main
-```
+   ```bash
+   python3 src/main.py
+   ```
 
 ### Running Tests
-
-Run the starter tests with:
 
 ```bash
 pytest
@@ -202,144 +190,45 @@ You can add more tests in `tests/test_recommender.py`.
 
 ## Experiments You Tried
 
-Use this section to document the experiments you ran. For example:
+**Experiment 1 — Swapping genre and energy weights.**
+The original starter code gave genre 2.0 points and energy 1.0 points. I flipped those: genre dropped to 1.0, energy rose to 2.0. The reason was that genre was dominating too much — songs with a matching genre were winning even when the mood and energy felt completely wrong. After the swap, energy became the tiebreaker and recommendations felt more "vibe-accurate" within a genre, though the downside is that energy now dominates cross-genre slots.
 
-- What happened when you changed the weight on genre from 2.0 to 0.5
-- What happened when you added tempo or valence to the score
-- How did your system behave for different types of users
+**Experiment 2 — Adversarial profiles.**
+I ran four edge-case profiles to find failure modes:
+- *Sad But Wired* (blues / sad / energy 0.9) — mood and energy directly conflict. The blues song appeared at #1 (genre + mood match), but slots #2–5 were rock, funk, and EDM — the opposite of blues — because high energy mattered more than style.
+- *Ghost Genre* (polka / happy / energy 0.8) — "polka" doesn't exist in the catalog. The system still returned 5 songs scoring up to 2.96 out of 4.0 using mood and energy alone. A made-up genre is nearly indistinguishable from a real one.
+- *Overclocked* (edm / euphoric / energy 1.5) — energy set above the 0–1 scale. The formula silently produced low energy similarity scores for every song (even the highest-energy ones), but never warned about the invalid input.
+- *Blank Slate* (empty dict) — with no preferences supplied, energy defaulted to 0.0 and the quietest songs won: classical, ambient, blues. An empty profile is not neutral — it secretly recommends calm acoustic music.
+
+**Experiment 3 — Mood label mismatch.**
+The Chill Lofi profile used mood `"calm"` but the dataset uses `"chill"`. The result: zero mood matches across all 20 songs — silently. The profile still worked well at the top (3 genre matches), but slots #4 and #5 were filled by blues and ambient songs the user never asked for. Fixing this would require either standardizing labels or adding fuzzy matching.
 
 ---
 
 ## Limitations and Risks
 
-Summarize some limitations of your recommender.
+**It only works on a tiny catalog.** 20 songs is not enough for meaningful genre matching. Most genres have 1 song, so genre preference barely influences the bottom half of results.
 
-Examples:
+**It does not understand lyrics, language, or culture.** Two songs can have identical energy and genre labels but feel completely different. The system cannot tell the difference between a joyful pop song and an ironic one.
 
-- It only works on a tiny catalog
-- It does not understand lyrics or language
-- It might over favor one genre or mood
+**It over-favors energy.** Because energy is the only continuous signal and it's weighted at 2×, users with moderate energy preferences end up with recommendations that drift toward whatever genre happens to cluster near their energy value — not their actual taste.
 
-You will go deeper on this in your model card.
+**It treats all users the same.** A new listener and a longtime fan of a genre get the same recommendations. There is no personalization beyond the three inputs provided.
+
+**Exact string matching is fragile.** One spelling difference between a user's mood label and the dataset label means zero mood points for every song, with no feedback to the user.
 
 ---
 
 ## Reflection
 
-Read and complete `model_card.md`:
+**How recommenders turn data into predictions**
+
+Building this made it clear that a recommender is just a function that turns preferences into a ranked list. The formula looks balanced — 1 point for genre, 1 for mood, up to 2 for energy — but in practice energy almost always wins after the first two results. That gap between what the formula says and what actually shows up in slots #4 and #5 is the most important thing I took from this project. The output can look reasonable even when the underlying logic has a significant imbalance, which means you can't evaluate a recommender just by glancing at the top result.
+
+**Where bias or unfairness could show up**
+
+The Blank Slate experiment showed me that bias doesn't always look wrong. An empty user profile returned a confident, specific playlist — calm, acoustic, classical — because of a silent default I never explicitly chose. In a real product that would mean new users or users who skip preference setup always get steered toward one kind of music, with no indication that their results are based on assumptions rather than their actual taste. Small design decisions in the scoring formula become invisible policies at scale: who gets discovered, what genres get amplified, and whose taste the system was implicitly optimized for. Those questions matter a lot more when a real catalog has millions of songs and the formula runs for millions of users.
+
+---
 
 [**Model Card**](model_card.md)
-
-Write 1 to 2 paragraphs here about what you learned:
-
-- about how recommenders turn data into predictions
-- about where bias or unfairness could show up in systems like this
-
-
----
-
-## 7. `model_card_template.md`
-
-Combines reflection and model card framing from the Module 3 guidance. :contentReference[oaicite:2]{index=2}  
-
-```markdown
-# 🎧 Model Card - Music Recommender Simulation
-
-## 1. Model Name
-
-Give your recommender a name, for example:
-
-> VibeFinder 1.0
-
----
-
-## 2. Intended Use
-
-- What is this system trying to do
-- Who is it for
-
-Example:
-
-> This model suggests 3 to 5 songs from a small catalog based on a user's preferred genre, mood, and energy level. It is for classroom exploration only, not for real users.
-
----
-
-## 3. How It Works (Short Explanation)
-
-Describe your scoring logic in plain language.
-
-- What features of each song does it consider
-- What information about the user does it use
-- How does it turn those into a number
-
-Try to avoid code in this section, treat it like an explanation to a non programmer.
-
----
-
-## 4. Data
-
-Describe your dataset.
-
-- How many songs are in `data/songs.csv`
-- Did you add or remove any songs
-- What kinds of genres or moods are represented
-- Whose taste does this data mostly reflect
-
----
-
-## 5. Strengths
-
-Where does your recommender work well
-
-You can think about:
-- Situations where the top results "felt right"
-- Particular user profiles it served well
-- Simplicity or transparency benefits
-
----
-
-## 6. Limitations and Bias
-
-Where does your recommender struggle
-
-Some prompts:
-- Does it ignore some genres or moods
-- Does it treat all users as if they have the same taste shape
-- Is it biased toward high energy or one genre by default
-- How could this be unfair if used in a real product
-
----
-
-## 7. Evaluation
-
-How did you check your system
-
-Examples:
-- You tried multiple user profiles and wrote down whether the results matched your expectations
-- You compared your simulation to what a real app like Spotify or YouTube tends to recommend
-- You wrote tests for your scoring logic
-
-You do not need a numeric metric, but if you used one, explain what it measures.
-
----
-
-## 8. Future Work
-
-If you had more time, how would you improve this recommender
-
-Examples:
-
-- Add support for multiple users and "group vibe" recommendations
-- Balance diversity of songs instead of always picking the closest match
-- Use more features, like tempo ranges or lyric themes
-
----
-
-## 9. Personal Reflection
-
-A few sentences about what you learned:
-
-- What surprised you about how your system behaved
-- How did building this change how you think about real music recommenders
-- Where do you think human judgment still matters, even if the model seems "smart"
-

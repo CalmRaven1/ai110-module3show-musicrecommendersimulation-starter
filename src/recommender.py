@@ -66,19 +66,24 @@ def load_songs(csv_path: str) -> List[Dict]:
     return songs
 
 def score_song(user_prefs: Dict, song: Dict) -> Tuple[float, List[str]]:
-    """Score one song against user prefs (+2 genre, +1 mood, +0–1 energy); return (score, reasons)."""
+    """Score one song against user prefs (+1 genre, +1 mood, +0–2 energy); return (score, reasons).
+
+    Weight shift experiment: genre halved (2→1), energy doubled (1→2).
+    Max score remains 4.0. Rationale: genre was dominating mood matches;
+    this lets energy differentiate songs more within a genre.
+    """
     score = 0.0
     reasons = []
 
     if song.get("genre") == user_prefs.get("genre"):
-        score += 2.0
-        reasons.append("genre match (+2.0)")
+        score += 1.0
+        reasons.append("genre match (+1.0)")
 
     if song.get("mood") == user_prefs.get("mood"):
         score += 1.0
         reasons.append("mood match (+1.0)")
 
-    energy_sim = 1.0 - abs(song.get("energy", 0.0) - user_prefs.get("energy", 0.0))
+    energy_sim = 2.0 * (1.0 - abs(song.get("energy", 0.0) - user_prefs.get("energy", 0.0)))
     score += energy_sim
     reasons.append(f"energy similarity (+{energy_sim:.2f})")
 
