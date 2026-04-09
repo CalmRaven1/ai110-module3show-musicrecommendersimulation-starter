@@ -1,11 +1,21 @@
-id,title,artist,genre,mood,energy,tempo_bpm,valence,danceability,acousticness
-1,Sunrise City,Neon Echo,pop,happy,0.82,118,0.84,0.79,0.18
-2,Midnight Coding,LoRoom,lofi,chill,0.42,78,0.56,0.62,0.71
-3,Storm Runner,Voltline,rock,intense,0.91,152,0.48,0.66,0.10
-4,Library Rain,Paper Lanterns,lofi,chill,0.35,72,0.60,0.58,0.86
-5,Gym Hero,Max Pulse,pop,intense,0.93,132,0.77,0.88,0.05
-6,Spacewalk Thoughts,Orbit Bloom,ambient,chill,0.28,60,0.65,0.41,0.92
-7,Coffee Shop Stories,Slow Stereo,jazz,relaxed,0.37,90,0.71,0.54,0.89
-8,Night Drive Loop,Neon Echo,synthwave,moody,0.75,110,0.49,0.73,0.22
-9,Focus Flow,LoRoom,lofi,focused,0.40,80,0.59,0.60,0.78
-10,Rooftop Lights,Indigo Parade,indie pop,happy,0.76,124,0.81,0.82,0.35
+id,title,artist,genre,mood,energy,tempo_bpm,valence,danceability,acousticness,speechiness
+1,Sunrise City,Neon Echo,pop,happy,0.82,118,0.84,0.79,0.18,0.06
+2,Midnight Coding,LoRoom,lofi,chill,0.42,78,0.56,0.62,0.71,0.04
+3,Storm Runner,Voltline,rock,intense,0.91,152,0.48,0.66,0.10,0.07
+4,Library Rain,Paper Lanterns,lofi,chill,0.35,72,0.60,0.58,0.86,0.03
+5,Gym Hero,Max Pulse,pop,intense,0.93,132,0.77,0.88,0.05,0.08
+6,Spacewalk Thoughts,Orbit Bloom,ambient,chill,0.28,60,0.65,0.41,0.92,0.02
+7,Coffee Shop Stories,Slow Stereo,jazz,relaxed,0.37,90,0.71,0.54,0.89,0.05
+8,Night Drive Loop,Neon Echo,synthwave,moody,0.75,110,0.49,0.73,0.22,0.04
+9,Focus Flow,LoRoom,lofi,focused,0.40,80,0.59,0.60,0.78,0.03
+10,Rooftop Lights,Indigo Parade,indie pop,happy,0.76,124,0.81,0.82,0.35,0.06
+11,Crown Heights Anthem,Kayo Verse,hip-hop,confident,0.84,96,0.72,0.91,0.08,0.38
+12,Moonlight Sonata Reimagined,Clara Voss,classical,melancholic,0.22,54,0.31,0.28,0.97,0.02
+13,Dusty Back Road,The Hollows,country,nostalgic,0.51,104,0.74,0.58,0.82,0.07
+14,Iron Horizon,Gravefield,metal,angry,0.97,178,0.22,0.61,0.04,0.09
+15,Velvet Midnight,Sable June,r&b,romantic,0.55,88,0.79,0.72,0.42,0.11
+16,Groove Cathedral,Funktown Collective,funk,euphoric,0.88,118,0.89,0.95,0.19,0.10
+17,Island Breeze,Coral Root,reggae,peaceful,0.48,82,0.78,0.67,0.64,0.08
+18,Empty Glass Blues,Hound Monroe,blues,sad,0.31,68,0.27,0.44,0.91,0.06
+19,Hyperflux,Circuit Drift,edm,euphoric,0.96,140,0.83,0.93,0.03,0.05
+20,River Memory,Della Shaw,soul,nostalgic,0.53,94,0.76,0.63,0.73,0.09
